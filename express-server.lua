@@ -242,3 +242,5 @@ express.Server = function ()
     setmetatable(obj, { __index = Server })
     return obj
 end
+
+return express
