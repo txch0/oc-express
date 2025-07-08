@@ -94,11 +94,12 @@ function Response.new(server, request)
 end
 
 --[[ Server Object ]]--
-local Server = {
-    __type = "Server",
-    __listeners = {},
-    _users = {}
-}
+local Server = {}
+
+Server.__index = Server
+Server.__type = "Server"
+Server.__listeners = {}
+Server._users = {}
 
 -- Server utility functions
 function Server:__validateRoute(route)
@@ -237,10 +238,14 @@ function Server:stop()
     self.__listening = false
 end
 
-express.Server = function ()
-    local obj = {}
-    setmetatable(obj, { __index = Server })
-    return obj
+function Server.new()
+    local self = {
+        __listeners = {},
+        _users = {},
+        __type = "Server",
+    }
+    setmetatable(self, Server)
+    return self
 end
 
 return express
