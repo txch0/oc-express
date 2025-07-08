@@ -58,7 +58,7 @@ local Response = {
     __type = "Response"
 }
 
-function Response:Send(...)
+function Response:send(...)
     if self.__sent then return false end
     self.vargs = ...
     for _, user in pairs(self.__server._users) do
@@ -70,13 +70,13 @@ function Response:Send(...)
     return success
 end
 
-function Response:SetStatus(status)
+function Response:setStatus(status)
     if self.__sent then return false end
     modem.send(self.__request.agent.address, self.__request.agent.port, "expServerStatus", self.headers, status)
     return self
 end
 
-function Response:SetHeaders(headers)
+function Response:setHeaders(headers)
     self.headers = headers
     return self
 end
@@ -212,14 +212,14 @@ function Server:listen(port)
 
             local routeIsValid = self:__validateRoute(req.route)
             if not routeIsValid then 
-                res:SetStatus(400):Send({
+                res:setStatus(400):send({
                     error = "Route does not exist."
                 }) 
             end
 
             local headersValid, listener = self:__validateHeaders(req.headers, req.route)
             if not headersValid then
-                res:SetStatus(400):Send({
+                res:setStatus(400):send({
                     error = listener
                 })
             end
