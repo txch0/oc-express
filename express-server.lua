@@ -248,4 +248,6 @@ function Server.new()
     return self
 end
 
+express.Server = Server.new
+
 return express
