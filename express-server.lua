@@ -194,12 +194,12 @@ function Server:once(route, method, ...)
     })
 end
 
-function Server:Use(method)
+function Server:use(method)
     table.insert(self._users, method)
 end 
 
 -- Runtime
-function Server:Listen(port)
+function Server:listen(port)
     -- Create runtime
     self.__listening = true
     local function createRuntime()
@@ -233,7 +233,7 @@ function Server:Listen(port)
     return self
 end
 
-function Server:Stop()
+function Server:stop()
     self.__listening = false
 end
 
