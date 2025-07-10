@@ -243,6 +243,7 @@ function Server:listen(port)
         while self._listening do
             modem.open(port)
             local _, _, address, reqPort, distance, route, headers, body = event.pull("modem_message")
+            print("REQUEST")
 
             local req = Request.new(self, address, reqPort, distance, route, headers, body)
             local res = Response.new(self, req)
