@@ -4,7 +4,8 @@ express.version = "1.0"
 --[[ Definitions ]]--
 local component = require("component")
 local event = require("event")
-local serialization = require("serialization")=
+local serialization = require("serialization")
+local thread = require("thread")
 
 local modem = component.modem
 
