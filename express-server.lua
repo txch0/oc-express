@@ -14,6 +14,7 @@ express.LuaSerializer = function (req, res)
     req.headers = serialization.unserialize(req.headers)
     req.body = serialization.unserialize(req.body)
 
+    print("LS A")
     function res:send(...)  
         if self.__sent then return false end
         self.vargs = ...
@@ -28,7 +29,17 @@ express.LuaSerializer = function (req, res)
         end
         self.vargs = table.unpack(serializedArgs)
 
-        local success = modem.send(self.__request.agent.address, self.__request.agent.port, "expServerResponse", self.headers, self.vargs)
+        if self.headers then
+            self.headers = serialization.serialize(headers)
+        else
+            self.headers = "{}"
+        end
+
+        if #{ self.vargs } > 0 then
+            local success = modem.send(self.__request.agent.address, self.__request.agent.port, "expServerResponse", self.headers, self.vargs)
+        else
+            local success = modem.send(self.__request.agent.address, self.__request.agent.port, "expServerResponse", self.headers)
+        end
         self.__sent = success
         return success
     end
@@ -243,7 +254,6 @@ function Server:listen(port)
         while self._listening do
             modem.open(port)
             local _, _, address, reqPort, distance, route, headers, body = event.pull("modem_message")
-            print("REQUEST")
 
             local req = Request.new(self, address, reqPort, distance, route, headers, body)
             local res = Response.new(self, req)
