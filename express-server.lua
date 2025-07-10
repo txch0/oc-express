@@ -253,7 +253,12 @@ function Server:listen(port)
     local function createRuntime()
         while self._listening do
             modem.open(port)
-            local _, _, address, reqPort, distance, route, headers, body = event.pull("modem_message")
+            local id, _, address, reqPort, distance, route, headers, body = event.pullMultiple("touch", "interrupted")
+
+            if id == "interruped" then
+                self:stop()
+                break
+            end
 
             local req = Request.new(self, address, reqPort, distance, route, headers, body)
             local res = Response.new(self, req)
