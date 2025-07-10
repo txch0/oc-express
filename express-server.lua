@@ -4,8 +4,7 @@ express.version = "1.0"
 --[[ Definitions ]]--
 local component = require("component")
 local event = require("event")
-local serialization = require("serialization")
-local thread = require("thread")
+local serialization = require("serialization")=
 
 local modem = component.modem
 
@@ -275,16 +274,11 @@ function Server:listen(port)
         end
     end
 
-    self.__thread = thread.create(createRuntime)
-    self.__thread:detach()
-    return self
+    createRuntime()
 end
 
 function Server:stop()
     self._listening = false
-    if self.__thread then
-        self.__thread:kill()
-    end
 end
 
 function Server.new()
