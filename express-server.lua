@@ -9,21 +9,60 @@ local serialization = require("serialization")
 local modem = component.modem
 
 -- [[ Utility Functions ]]
-express.LuaSerializer = function (v)
-    if v.__type == "Request" then
-        v.headers = serialization.unserialize(v.headers)
-        v.body = serialization.unserialize(v.body)
-    elseif v.__type == "Response" then
+express.LuaSerializer = function (req, res)
+    req.headers = serialization.unserialize(req.headers)
+    req.body = serialization.unserialize(req.body)
+
+    function res:send(...)  
+        if self.__sent then return false end
+        self.vargs = ...
+
         local serializedArgs = {}
-        for _, arg in pairs({v.vargs}) do
+        for _, arg in pairs({self.vargs}) do
             if type(arg) == "table" then
                 table.insert(serializedArgs, serialization.serialize(arg))
             else
                 table.insert(serializedArgs, arg)
             end
         end
-        v.vargs = table.unpack(serializedArgs)
+        self.vargs = table.unpack(serializedArgs)
+
+        local success = modem.send(self.__request.agent.address, self.__request.agent.port, "expServerResponse", self.headers, self.vargs)
+        self.__sent = success
+        return success
     end
+
+    return true
+end
+
+express.LuaSerializerRequestsOnly = function (req, res)
+    req.headers = serialization.unserialize(req.headers)
+    req.body = serialization.unserialize(req.body)
+
+    return true
+end
+
+express.LuaSerializerResponseOnly = function (req, res)
+    function res:send(...)  
+        if self.__sent then return false end
+        self.vargs = ...
+
+        local serializedArgs = {}
+        for _, arg in pairs({self.vargs}) do
+            if type(arg) == "table" then
+                table.insert(serializedArgs, serialization.serialize(arg))
+            else
+                table.insert(serializedArgs, arg)
+            end
+        end
+        self.vargs = table.unpack(serializedArgs)
+
+        local success = modem.send(self.__request.agent.address, self.__request.agent.port, "expServerResponse", self.headers, self.vargs)
+        self.__sent = success
+        return success
+    end
+
+    return true
 end
 
 --[[ Request ]]
@@ -45,10 +84,6 @@ function Request.new(server, address, port, distance, route, headers, body)
     }
 
     setmetatable(req, { __index = Request })
-
-    for _, user in pairs(server._users) do
-        user(req)
-    end
 
     return req
 end
@@ -211,6 +246,15 @@ function Server:listen(port)
             local req = Request.new(self, address, reqPort, distance, route, headers, body)
             local res = Response.new(self, req)
 
+            for _, user in pairs(self._users) do
+                local continue, message = user(req, res)
+                if not continue then
+                    res:setStatus(500):send({
+                        error = message or "An error occured."
+                })
+                end
+            end
+
             local routeIsValid = self:__validateRoute(req.route)
             if not routeIsValid then 
                 res:setStatus(400):send({
@@ -226,11 +270,10 @@ function Server:listen(port)
             end
             assert(listener, "Unknown error occured.")
             listener.callback(req, res)
-
         end
     end
 
-    self.__coroutine = coroutine.create(createRuntime)
+    createRuntime()
     return self
 end
 
