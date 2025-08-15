@@ -133,7 +133,7 @@ function Response.new(server, request)
         __server = server,
         __request = request,
         __sent = false,
-        headers = {}
+        headers = "{}"
     }
     
     setmetatable(res, { __index = Response})
